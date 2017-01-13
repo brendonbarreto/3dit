@@ -36,7 +36,17 @@ namespace _3DIT.Controllers
 			string url = string.Format("http://musicbrainz.org/ws/2/recording/?query={0}%20AND%20artist:\"{1}\"%20NOT%20secondarytype:Live&limit=10&fmt=json",
 				Uri.EscapeDataString(title),
 				Uri.EscapeDataString(artist));
-			string json;
+
+			//SongQuery query = new SongQuery();
+			//query.Api = SongApi.MusicBrainz;
+			//query.SearchOptions.Add("limit", "10");
+			//query.SearchOptions.Add("fmt", "json");
+			//query.AddSearchField(LuceneBooleanCondition.AND, "recording", title, true);
+			//query.AddSearchField(LuceneBooleanCondition.AND, "artist", artist, true);
+			//query.AddSearchField(LuceneBooleanCondition.NOT, "secondarytype", "Live", false);
+			//query.Search();
+
+			string json = null;
 			using (var webClient = new WebClient())
 			{
 				webClient.Headers.Add("user-agent", "apitest/1.0 ( brendonbarreto@hotmail.com )");

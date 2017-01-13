@@ -146,7 +146,7 @@ namespace _3DIT.Controllers
 
 				return GenerateTags(path);
 			}
-			catch (Exception e)
+			catch
 			{
 				return Json(new AjaxResponse(false, "Erro inesperado"));
 			}
@@ -170,7 +170,7 @@ namespace _3DIT.Controllers
 					return GenerateTags(filePath);
 				}
 			}
-			catch (Exception e)
+			catch
 			{
 				return Json(new AjaxResponse(false, "Erro inesperado"));
 			}
@@ -315,16 +315,11 @@ namespace _3DIT.Controllers
 					string coverX64 = Convert.ToBase64String(coverBytes);
 					model.AlbumArt = coverX64;
 				}
-				catch (Exception e)
+				catch
 				{
-
+					//IMAGE LINK BROKEN
 				}
-				
 			}
-
-			//model.Composer
-			//model.AlbumDiscLenght = item.
-			//model.AlbumArt
 			return Json(model);
 		}
 	}

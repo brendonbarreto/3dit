@@ -4,62 +4,8 @@
 		.service("SongService", SongService)
 		.service("FileValidator", FileValidator)
 		.service("SearchService", SearchService)
-		.directive("uploadSongInput", ["$mdDialog", "$http", "$rootScope", "SongService", function ($mdDialog, $http, $rootScope, SongService) {
-			return {
-				restrict: "A",
-				link: function ($scope, $element, attr) {
-					$element.bind("change", function () {
-						var file = $element[0].files[0];
-						var ext = file.name.split('.').pop();
-						if (file) {
-							$rootScope.file = file;
-							$rootScope.$apply();
-						}
-					});
-				}
-			}
-		}])
-		.directive("uploadImageInput", ["$mdDialog", "$http", "SongService", "FileValidator", function ($mdDialog, $http, SongService, FileValidator) {
-			return {
-				restrict: "A",
-				link: function ($scope, $element, attr) {
-					$element.bind("change", function () {
-						var file = $element[0].files[0];
-						var v = FileValidator.validate(file, "Image");
-						if (v.Status) {
-							if (file) {
-								var fd = new FormData();
-								fd.append('file', file);
-								$http.post("/Home/ChangeAlbumArt", fd, {
-									transformRequest: angular.identity,
-									headers: { 'Content-Type': undefined }
-								}).then(function (r) {
-									if (r.data.Status) {
-										SongService.AlbumArt = r.data.Objects[0];
-									} else {
-										var alert = $mdDialog.alert({
-											title: "Erro",
-											textContent: r.data.Message,
-											ok: 'Ok'
-										});
-
-										$mdDialog.show(alert);
-									}
-								});
-							}
-						} else {
-							var alert = $mdDialog.alert({
-								title: "Erro",
-								textContent: v.Message,
-								ok: 'Ok'
-							});
-
-							$mdDialog.show(alert);
-						}
-					});
-				}
-			}
-		}]);
+		.directive("uploadSongInput", UploadSongInput)
+		.directive("uploadImageInput", UploadImageInput);
 
 	FileValidator.$inject = [];
 	function FileValidator() {
@@ -311,8 +257,7 @@
 			});
 		};
 	};
-
-
+	
 	SearchService.$inject = ["$http", "SongService"];
 	function SearchService($http, SongService) {
 
@@ -334,6 +279,65 @@
 			});
 
 		};
+	};
+
+	UploadSongInput.$inject = ["$rootScope"];
+	function UploadSongInput($rootScope) {
+		return {
+			restrict: "A",
+			link: function ($scope, $element, attr) {
+				$element.bind("change", function () {
+					var file = $element[0].files[0];
+					if (file) {
+						$rootScope.file = file;
+						$rootScope.$apply();
+					}
+				});
+			}
+		}
+	};
+
+	UploadImageInput.$inject = ["$mdDialog", "$http", "SongService", "FileValidator"];
+	function UploadImageInput($mdDialog, $http, SongService, FileValidator) {
+		return {
+			restrict: "A",
+			link: function ($scope, $element, attr) {
+				$element.bind("change", function () {
+					var file = $element[0].files[0];
+					var v = FileValidator.validate(file, "Image");
+					if (v.Status) {
+						if (file) {
+							var fd = new FormData();
+							fd.append('file', file);
+							$http.post("/Home/ChangeAlbumArt", fd, {
+								transformRequest: angular.identity,
+								headers: { 'Content-Type': undefined }
+							}).then(function (r) {
+								if (r.data.Status) {
+									SongService.AlbumArt = r.data.Objects[0];
+								} else {
+									var alert = $mdDialog.alert({
+										title: "Erro",
+										textContent: r.data.Message,
+										ok: 'Ok'
+									});
+
+									$mdDialog.show(alert);
+								}
+							});
+						}
+					} else {
+						var alert = $mdDialog.alert({
+							title: "Erro",
+							textContent: v.Message,
+							ok: 'Ok'
+						});
+
+						$mdDialog.show(alert);
+					}
+				});
+			}
+		}
 	};
 
 })(angular);

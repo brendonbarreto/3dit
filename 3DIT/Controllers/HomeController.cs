@@ -1,4 +1,5 @@
 ﻿using _3DIT.Models;
+using MusicBrainzAPI.Json;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,31 +32,16 @@ namespace _3DIT.Controllers
 
 		public JsonResult SearchSong(string title, string artist)
 		{
-			//removed %20AND%20primarytype:album%20AND%20status:official
-			//removed %20NOT%20secondarytype:Live%20NOT%20secondarytype:Compilation
-			string url = string.Format("http://musicbrainz.org/ws/2/recording/?query={0}%20AND%20artist:\"{1}\"%20NOT%20secondarytype:Live&limit=10&fmt=json",
-				Uri.EscapeDataString(title),
-				Uri.EscapeDataString(artist));
-
-			//SongQuery query = new SongQuery();
-			//query.Api = SongApi.MusicBrainz;
-			//query.SearchOptions.Add("limit", "10");
-			//query.SearchOptions.Add("fmt", "json");
-			//query.AddSearchField(LuceneBooleanCondition.AND, "recording", title, true);
-			//query.AddSearchField(LuceneBooleanCondition.AND, "artist", artist, true);
-			//query.AddSearchField(LuceneBooleanCondition.NOT, "secondarytype", "Live", false);
-			//query.Search();
-
-			string json = null;
-			using (var webClient = new WebClient())
-			{
-				webClient.Headers.Add("user-agent", "apitest/1.0 ( brendonbarreto@hotmail.com )");
-				json = webClient.DownloadString(url);
-			}
-
-			QueryRecordings qr = JsonConvert.DeserializeObject<QueryRecordings>(json);
-			List<SongQueryResult> results = SongQueryResult.GetResults(qr);
-			return Json(results);
+			SongQuery query = new SongQuery();
+			query.Api = SongApi.MusicBrainz;
+			query.SearchOptions.Add("limit", "15");
+			query.SearchOptions.Add("fmt", "json");
+			query.AddSearchField(LuceneBooleanCondition.AND, "recording", title, true);
+			query.AddSearchField(LuceneBooleanCondition.AND, "artist", artist, true);
+			query.AddSearchField(LuceneBooleanCondition.NOT, "secondarytype", "Live", false);
+			query.UserAgent = "apitest/1.0 ( brendonbarreto@hotmail.com )";
+			query.Search();
+			return Json(query.Results);
 		}
 
 		public byte[] ResizeImage(byte[] imageBytes, int width, int height)

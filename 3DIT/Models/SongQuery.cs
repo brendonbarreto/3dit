@@ -1,6 +1,10 @@
-﻿using System;
+﻿using MusicBrainzAPI.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Web;
 
@@ -22,6 +26,8 @@ namespace _3DIT.Models
 		private List<LuceneBooleanField> SearchFields { get; set; }
 
 		public Dictionary<string, string> SearchOptions { get; set; }
+
+		public string UserAgent { get; set; }
 
 		public string ApiUrl
 		{
@@ -49,6 +55,84 @@ namespace _3DIT.Models
 		public void Search()
 		{
 			var url = GetSearchUrl();
+			string json = null;
+			using (var webClient = new WebClient())
+			{
+				webClient.Headers.Add("user-agent", UserAgent);
+				json = webClient.DownloadString(url);
+			}
+
+			QueryRecordings qr = JsonConvert.DeserializeObject<QueryRecordings>(json, new JsonSerializerSettings()
+			{
+				ContractResolver = new CamelCasePropertyNamesContractResolver()
+			});
+			SetResultsFromJson(qr);
+		}
+
+		private void SetResultsFromJson(QueryRecordings qr)
+		{ 
+			if (qr != null)
+			{
+				var recordings = qr.Recordings;
+				if (recordings != null && recordings.Count() > 0)
+				{
+					foreach (var rec in recordings)
+					{
+						SongQueryResult result = new SongQueryResult();
+
+						var artists = rec.ArtistCredit;
+						result.SongTitle = rec.Title;
+						if (artists != null && artists.Count() > 0)
+						{
+							if (artists != null)
+							{
+								var artist = artists[0].Artist;
+								result.ArtistName = artist.Name;
+							}
+						}
+
+						var albums = rec.Releases;
+						if (albums != null && albums.Count() > 0)
+						{
+							var album = albums[0];
+							if (album != null)
+							{
+								result.AlbumTitle = album.Title;
+								result.AlbumYear = album.Date != null ? album.Date.Substring(0, 4) : null;
+								result.AlbumId = album.Id;
+								var b = album.Media;
+								if (b != null && b.Count() > 0)
+								{
+									var c = b[0];
+									if (c != null)
+									{
+										result.DiscNumber = c.Position;
+										result.TrackCount = c.TrackCount;
+
+										var e = c.Track;
+										if (e != null && e.Count() > 0)
+										{
+											var f = e[0];
+											if (f != null)
+											{
+												result.TrackNumber = f.Number;
+											}
+										}
+									}
+								}
+							}
+						}
+
+						var tags = rec.Tags;
+						if (tags != null && tags.Count() > 0)
+						{
+							result.Genre = tags[0].Name;
+						}
+
+						Results.Add(result);
+					}
+				}
+			}
 		}
 
 		private string GetSearchUrl()

@@ -156,7 +156,6 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\QueryRecordings.cs" />
     <Compile Include="Models\FileValidator.cs" />
     <Compile Include="Models\AjaxResponse.cs" />
     <Compile Include="Models\SongApi.cs" />
@@ -207,6 +206,12 @@
     <None Include="Properties\PublishProfiles\Test.pubxml" />
     <Content Include="Scripts\jquery-3.1.1.slim.min.map" />
     <Content Include="Scripts\jquery-3.1.1.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MusicBrainzAPI\MusicBrainzAPI.csproj">
+      <Project>{8a351083-0f89-4a6b-bd6e-5ea906e2ea3b}</Project>
+      <Name>MusicBrainzAPI</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

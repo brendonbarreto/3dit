@@ -3,6 +3,7 @@
 		.controller("MainController", MainController)
 		.service("SongService", SongService)
 		.service("FileValidator", FileValidator)
+		.service("SearchService", SearchService)
 		.directive("uploadSongInput", ["$mdDialog", "$http", "$rootScope", "SongService", function ($mdDialog, $http, $rootScope, SongService) {
 			return {
 				restrict: "A",
@@ -187,21 +188,6 @@
 						return r;
 					}
 				});
-
-
-
-				//var fd = new FormData();
-				//fd.append('file', file);
-				//return $http.post("/Home/UploadSong", fd, {
-				//	transformRequest: angular.identity,
-				//	headers: { 'Content-Type': undefined }
-				//}).then(function (r) {
-				//	if (r.data.Status) {
-				//		$this.reset(r.data.Objects[0]);
-				//	}
-
-				//	return r.data;
-				//});
 			} else {
 
 			}
@@ -303,28 +289,48 @@
 		};
 	};
 
-
-	SearchController.$inject = ["$scope", "$http", "$mdDialog", "title", "artist", "SongService"];
-	function SearchController($scope, $http, $mdDialog, title, artist, SongService) {
-		$scope.hue = "bla";
+	SearchController.$inject = ["$scope", "$http", "$mdDialog", "title", "artist", "SongService", "SearchService"];
+	function SearchController($scope, $http, $mdDialog, title, artist, SongService, SearchService) {
 		$scope.title = title;
 		$scope.artist = artist;
 
 		$scope.search = function () {
-			$http.post("Home/SearchSong", {
-				title: $scope.title,
-				artist: $scope.artist
-			}).then(function (r) {
-				$scope.list = r.data;
+			$scope.q = true;
+			SearchService.search($scope.title, $scope.artist).then(function (list) {
+				$scope.list = list;
+				$scope.q = false;
 			});
 		};
 
 		$scope.select = function (item) {
-			$http.post("Home/SelectSearchSong", {
+			$scope.q = true;
+
+			SearchService.select(item).then(function (song) {
+				$mdDialog.hide();
+				$scope.q = false;
+			});
+		};
+	};
+
+
+	SearchService.$inject = ["$http", "SongService"];
+	function SearchService($http, SongService) {
+
+		this.search = function (title, artist) {
+			return $http.post("Home/SearchSong", {
+				title: title,
+				artist: artist
+			}).then(function (r) {
+				return r.data;
+			});
+		};
+
+		this.select = function (item) {
+			return $http.post("Home/SelectSearchSong", {
 				item: item
 			}).then(function (r) {
 				SongService.reset(r.data);
-				$mdDialog.hide();
+				return r.data;
 			});
 
 		};

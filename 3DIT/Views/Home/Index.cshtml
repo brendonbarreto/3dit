@@ -1,0 +1,163 @@
+﻿<md-toolbar style="background-color: #1E88E5;">
+	<div class="md-toolbar-tools">
+		<h2>
+			<span>3DITAR - Altere suas músicas online e gratuitamente</span>
+		</h2>
+		<span flex></span>
+	</div>
+</md-toolbar>
+
+<md-card style="width: 50%; display: table;margin: 10px auto;" ng-show="!fileReady">
+	<md-toolbar>
+		<div class="md-toolbar-tools">
+			<h2>
+				<span>Selecione o arquivo</span>
+			</h2>
+		</div>
+	</md-toolbar>
+	<div>
+		<div>
+			<div layout layout-align="center center">
+				<div layout layout-align="center center" layout-sm="column" flex="80">
+					<md-switch flex class="md-primary" md-no-ink aria-label="Switch No Ink" ng-model="fromUrl">
+						Selecionar arquivo a partir da URL
+					</md-switch>
+				</div>
+			</div>
+
+			<div ng-show="fromUrl" layout layout-align="center center">
+				<div layout layout-align="center center" layout-sm="column" flex="80">
+					<md-input-container flex>
+						<label>Url do arquivo</label>
+						<input ng-model="songUrl" type="text">
+					</md-input-container>
+				</div>
+			</div>
+
+			<div ng-show="!fromUrl" layout layout-align="center center">
+				<div layout layout-align="center center" layout-sm="column" flex="80">
+					<input class="ng-hide" id="fileInput" type="file" upload-song-input />
+					<label flex="30" for="fileInput" class="md-button md-raised">Selecione uma música</label>
+					<label flex="70">{{file ? file.name : "Nenhum arquivo selecionado"}}</label>
+				</div>
+			</div>
+
+			<div layout layout-align="end end">
+				<div layout layout-align="end end" layout-sm="column" flex="30">
+					<md-button ng-click="next()" class="md-raised md-primary" ng-disabled="(fromUrl && !songUrl) || (!fromUrl && !file)">
+						Próximo
+					</md-button>
+				</div>
+			</div>
+		</div>
+	</div>
+	@*<md-progress-linear md-mode="indeterminate" ng-show="q"></md-progress-linear>*@
+	<md-progress-linear md-mode="determinate" ng-show="q" value="{{song.qp}}"></md-progress-linear>
+</md-card>
+
+<div style="display: flex" flex="100" ng-show="fileReady">
+		<md-card @*flex="40"*@ style="width:500px">
+			<md-toolbar>
+				<div class="md-toolbar-tools">
+					<h2>
+						<span>Capa do álbum</span>
+					</h2>
+					<span flex></span>
+
+					<input class="ng-hide" id="inputArtFile" type="file" upload-image-input accept="image/*" />
+					<label for="inputArtFile" class="md-button md-icon-button">
+						<md-icon>mode_edit</md-icon>
+					</label>
+				</div>
+			</md-toolbar>
+			<div ng-if="song.AlbumArt">
+				<div style="height: 500px;width: 500px;background-image:url('data:image/png;base64,{{song.AlbumArt}}');">
+
+				</div>
+			</div>
+		</md-card>
+
+		<md-card style="width:100%">
+			<md-toolbar>
+				<div class="md-toolbar-tools">
+					<h2>
+						<span>Informações</span>
+					</h2>
+					<span flex></span>
+					<md-button class="md-icon-button" aria-label="Filter" ng-click="searchInfo()">
+						<md-icon>search</md-icon>
+					</md-button>
+				</div>
+			</md-toolbar>
+			<form name="subscriptionForm" flex="100">
+				<div layout layout-align="center center">
+					<div layout layout-align="center center" layout-sm="column" flex="80">
+						<md-input-container flex>
+							<label>Título</label>
+							<input ng-model="song.Title" type="text">
+						</md-input-container>
+					</div>
+				</div>
+				<div layout layout-align="center center">
+					<div layout layout-align="center center" layout-sm="column" flex="80">
+						<md-input-container flex>
+							<label>Artista</label>
+							<input ng-model="song.Artist" type="text">
+						</md-input-container>
+					</div>
+				</div>
+				<div layout layout-align="center center">
+					<div layout layout-align="center center" layout-sm="column" flex="80">
+						<md-input-container flex="90">
+							<label>Álbum</label>
+							<input ng-model="song.Album" type="text">
+						</md-input-container>
+
+						<md-input-container flex>
+							<label>Ano</label>
+							<input ng-model="song.Year" type="number">
+						</md-input-container>
+					</div>
+				</div>
+				<div layout layout-align="center center">
+					<div layout layout-align="center center" layout-sm="column" flex="80">
+						<md-input-container flex="20">
+							<label>Faixa nº</label>
+							<input ng-model="song.TrackNumber" type="text">
+						</md-input-container>
+						<span>&nbsp;&nbsp;de&nbsp;&nbsp;</span>
+						<md-input-container flex="20">
+							<input ng-model="song.AlbumTrackLenght" type="number">
+						</md-input-container>
+
+						<span flex="20"></span>
+						<md-input-container flex="20">
+							<label>Disco nº</label>
+							<input ng-model="song.DiscNumber" type="text">
+						</md-input-container>
+						<span>&nbsp;&nbsp;de&nbsp;&nbsp;</span>
+						<md-input-container flex="20">
+							<input ng-model="song.AlbumDiscLenght" type="number">
+						</md-input-container>
+					</div>
+				</div>
+				<div layout layout-align="center center">
+					<div layout layout-align="center center" layout-sm="column" flex="80">
+						<md-input-container flex="30">
+							<label>Gênero</label>
+							<input ng-model="song.Genre" type="text">
+						</md-input-container>
+						<md-input-container flex="70">
+							<label>Compositor</label>
+							<input ng-model="song.Composer" type="text">
+						</md-input-container>
+					</div>
+				</div>
+			</form>
+		</md-card>
+</div>
+
+<md-button class="md-fab md-fab-bottom-right" aria-label="Add" ng-click="saveSong($event)" ng-show="fileReady" @*ng-disabled="true"*@>
+	<md-icon>done</md-icon>
+</md-button>
+

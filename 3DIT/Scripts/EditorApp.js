@@ -4,8 +4,9 @@
 		.service("SongService", SongService)
 		.service("FileValidator", FileValidator)
 		.service("SearchService", SearchService)
-		.directive("uploadSongInput", UploadSongInput)
-		.directive("uploadImageInput", UploadImageInput);
+		.service("Utilities", UtilitiesService)
+		.directive("uploadFileInput", UploadFileInput)
+		.directive("imgFallback", imgFallback);
 
 	FileValidator.$inject = [];
 	function FileValidator() {
@@ -100,43 +101,65 @@
 			});
 		};
 
+		this.getImageFromURL = function (url) {
+			var $this = this;
+			return $http.post("/Home/GetImageFromURL", {
+				url: url
+			}).then(function (r) {
+				if (r.data.Status) {
+					$this.AlbumArt = r.data.Objects[0];
+				}
+
+				return r.data;
+			});
+		};
+
 		this.uploadSong = function (file) {
-			var v = FileValidator.validate(file, "Audio");
-			if (v.Status) {
-				var $this = this;
-				var fd = new FormData();
-				fd.append('file', file);
+			var $this = this;
+			var fd = new FormData();
+			fd.append('file', file);
 
-				return $.ajax({
-					xhr: function () {
-						var xhr = new XMLHttpRequest();
+			return $.ajax({
+				xhr: function () {
+					var xhr = new XMLHttpRequest();
 
-						xhr.upload.addEventListener("progress", function (evt) {
-							if (evt.lengthComputable) {
-								var completed = parseInt((evt.loaded / evt.total) * 100);
-								$this.qp = completed;
-								$rootScope.$apply();
-							}
-						}, false);
-
-						return xhr;
-					},
-					url: "/Home/UploadSong",
-					type: "POST",
-					data: fd,
-					processData: false,
-					contentType: false,
-					success: function (r) {
-						if (r.Status) {
-							$this.reset(r.Objects[0]);
+					xhr.upload.addEventListener("progress", function (evt) {
+						if (evt.lengthComputable) {
+							var completed = parseInt((evt.loaded / evt.total) * 100);
+							$this.qp = completed;
+							$rootScope.$apply();
 						}
+					}, false);
 
-						return r;
+					return xhr;
+				},
+				url: "/Home/UploadSong",
+				type: "POST",
+				data: fd,
+				processData: false,
+				contentType: false,
+				success: function (r) {
+					if (r.Status) {
+						$this.reset(r.Objects[0]);
 					}
-				});
-			} else {
 
-			}
+					return r;
+				}
+			});
+		};
+
+		this.uploadAlbumArt = function (file) {
+			var $this = this;
+			var fd = new FormData();
+			fd.append('file', file);
+
+			return $http.post("/Home/ChangeAlbumArt", fd, {
+				transformRequest: angular.identity,
+				headers: { 'Content-Type': undefined }
+			}).then(function (r) {
+				$this.AlbumArt = r.data.Objects[0];
+				return r.data;
+			});
 		};
 
 		this.save = function (download) {
@@ -155,17 +178,26 @@
 			});
 		};
 
+		this.clear = function () {
+			var $this = this;
+			return $http.post("Home/Clear").then(function (r) {
+				$this.reset();
+			});
+		};
+
 		this.reset();
 	};
 
-	MainController.$inject = ["$scope", "$http", "$mdDialog", "SongService", "FileValidator"];
-	function MainController($scope, $http, $mdDialog, SongService, FileValidator) {
+	MainController.$inject = ["$scope", "$http", "$mdDialog", "$mdPanel", "SongService", "FileValidator", "Utilities"];
+	function MainController($scope, $http, $mdDialog, $mdPanel, SongService, FileValidator, Utilities) {
 
 		$scope.song = SongService;
 
 		$scope.saveSong = function (ev) {
+			$scope.q = true;
 			SongService.save(true).then(function (r) {
 				$scope.fileReady = false;
+				$scope.q = false;
 			});
 		};
 
@@ -233,6 +265,39 @@
 				}
 			});
 		};
+
+		$scope.openImageSelectionPanel = function (ev) {
+			var position = $mdPanel.newPanelPosition()
+				.relativeTo(ev.target)
+				.addPanelPosition('align-start', 'below');
+
+			var config = {
+				attachTo: angular.element(document.body),
+				controller: CoverSelectionController,
+				templateUrl: 'Home/CoverSelectionPanel',
+				position: position,
+				openFrom: ev,
+				clickOutsideToClose: true,
+				escapeToClose: true,
+				focusOnOpen: false,
+				zIndex: 2
+			};
+
+			$mdPanel.open(config).then(function (result) {
+				Utilities.panelRef = result;
+			});;
+		};
+
+		$scope.onFileChanged = function (file) {
+			$scope.file = file;
+			$scope.fileName = Utilities.breakText(file.name, 50);
+			$scope.$apply();
+		};
+
+		$scope.back = function (e) {
+			$scope.fileReady = false;
+			SongService.clear();
+		}
 	};
 
 	SearchController.$inject = ["$scope", "$http", "$mdDialog", "title", "artist", "SongService", "SearchService"];
@@ -257,7 +322,7 @@
 			});
 		};
 	};
-	
+
 	SearchService.$inject = ["$http", "SongService"];
 	function SearchService($http, SongService) {
 
@@ -281,59 +346,100 @@
 		};
 	};
 
-	UploadSongInput.$inject = ["$rootScope"];
-	function UploadSongInput($rootScope) {
+	CoverSelectionController.$inject = ["$scope", "Utilities", "FileValidator", "SongService"];
+	function CoverSelectionController($scope, Utilities, FileValidator, SongService) {
+
+		$scope.onFileChanged = function (file) {
+			$scope.file = file;
+			$scope.fileName = Utilities.breakText(file.name, 30);
+			$scope.$apply();
+		};
+
+		$scope.next = function () {
+			$scope.q = true;
+			if ($scope.fromUrl) {
+				SongService.getImageFromURL($scope.imageUrl).then(function (r) {
+					if (r.Status) {
+						$scope.q = false;
+						Utilities.closePanel();
+					} else {
+						Utilities.showAlert("Erro", r.Message);
+						$scope.q = false;
+					}
+				});
+			} else {
+				var v = FileValidator.validate($scope.file, "Image");
+				if (v.Status) {
+					SongService.uploadAlbumArt($scope.file).then(function (r) {
+						if (r.Status) {
+							$scope.q = false;
+							Utilities.closePanel();
+						} else {
+							Utilities.showAlert("Erro", r.Message);
+							$scope.q = false;
+						}
+					});
+				} else {
+					Utilities.showAlert("Erro", v.Message);
+					$scope.q = false;
+				}
+
+			}
+		};
+	};
+
+	UtilitiesService.$inject = ["$mdDialog"];
+	function UtilitiesService($mdDialog) {
+		this.breakText = function (text, max) {
+			if (text) {
+				if (text.length > max) {
+					return (text.substring(0, max) + "...");
+				} else {
+					return text;
+				}
+			} else {
+				return null;
+			}
+		};
+
+		this.showAlert = function showAlert(title, message) {
+			var alert = $mdDialog.alert({
+				title: title,
+				textContent: message,
+				ok: 'Ok'
+			});
+
+			$mdDialog.show(alert);
+		};
+
+		this.closePanel = function () {
+			this.panelRef.close();
+		}
+	};
+
+	UploadFileInput.$inject = [];
+	function UploadFileInput() {
 		return {
 			restrict: "A",
+			scope: {
+				onFileChanged: "="
+			},
 			link: function ($scope, $element, attr) {
 				$element.bind("change", function () {
 					var file = $element[0].files[0];
-					if (file) {
-						$rootScope.file = file;
-						$rootScope.$apply();
-					}
+					$scope.onFileChanged(file);
 				});
 			}
 		}
 	};
 
-	UploadImageInput.$inject = ["$mdDialog", "$http", "SongService", "FileValidator"];
-	function UploadImageInput($mdDialog, $http, SongService, FileValidator) {
+	imgFallback.$inject = [];
+	function imgFallback() {
 		return {
-			restrict: "A",
-			link: function ($scope, $element, attr) {
-				$element.bind("change", function () {
-					var file = $element[0].files[0];
-					var v = FileValidator.validate(file, "Image");
-					if (v.Status) {
-						if (file) {
-							var fd = new FormData();
-							fd.append('file', file);
-							$http.post("/Home/ChangeAlbumArt", fd, {
-								transformRequest: angular.identity,
-								headers: { 'Content-Type': undefined }
-							}).then(function (r) {
-								if (r.data.Status) {
-									SongService.AlbumArt = r.data.Objects[0];
-								} else {
-									var alert = $mdDialog.alert({
-										title: "Erro",
-										textContent: r.data.Message,
-										ok: 'Ok'
-									});
-
-									$mdDialog.show(alert);
-								}
-							});
-						}
-					} else {
-						var alert = $mdDialog.alert({
-							title: "Erro",
-							textContent: v.Message,
-							ok: 'Ok'
-						});
-
-						$mdDialog.show(alert);
+			link: function (scope, element, attrs) {
+				element.bind('error', function () {
+					if (attrs.src != attrs.imgFallback) {
+						attrs.$set('src', attrs.imgFallback);
 					}
 				});
 			}

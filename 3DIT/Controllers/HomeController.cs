@@ -30,6 +30,11 @@ namespace _3DIT.Controllers
 			return PartialView();
 		}
 
+		public ActionResult CoverSelectionPanel()
+		{
+			return PartialView();
+		}
+
 		public JsonResult SearchSong(string title, string artist)
 		{
 			SongQuery query = new SongQuery();
@@ -100,6 +105,7 @@ namespace _3DIT.Controllers
 			return new string[0];
 		}
 
+		//http://stackoverflow.com/a/1344255
 		public string GetUniqueKey(int maxSize)
 		{
 			char[] chars = new char[62];
@@ -130,7 +136,13 @@ namespace _3DIT.Controllers
 				req.Method = "HEAD";
 				using (System.Net.WebResponse resp = req.GetResponse())
 				{
-					var result = FileValidator.ValidateByContentType(resp.ContentType, resp.ContentLength);
+					var result = FileValidator.Validate(new ValidationSettings()
+					{
+						AllowedType = FileType.Audio,
+						ByExtension = false,
+						ContentType = resp.ContentType,
+						FileSize = resp.ContentLength
+					});
 
 					if (!result.IsValid)
 					{
@@ -157,7 +169,13 @@ namespace _3DIT.Controllers
 			try
 			{
 				var file = Request.Files[0];
-				var result = FileValidator.ValidateByName(file.FileName, file.ContentLength);
+				var result = FileValidator.Validate(new ValidationSettings()
+				{
+					AllowedType = FileType.Audio,
+					ByExtension = true,
+					FileName = file.FileName,
+					FileSize = file.ContentLength
+				});
 
 				if (!result.IsValid)
 				{
@@ -255,14 +273,20 @@ namespace _3DIT.Controllers
 			Response.End();
 
 			System.IO.File.Delete(fileName);
+			Session.Remove("FileName");
 			//return File(Session["FileName"] as string, MimeMapping.GetMimeMapping(fileName));
 		}
 
 		public JsonResult ChangeAlbumArt()
 		{
 			var file = Request.Files[0];
-			var result = FileValidator.ValidateByName(file.FileName, file.ContentLength);
-
+			var result = FileValidator.Validate(new ValidationSettings()
+			{
+				AllowedType = FileType.Image,
+				ByExtension = true,
+				FileName = file.FileName,
+				FileSize = file.ContentLength
+			});
 			if (!result.IsValid)
 			{
 				return Json(new AjaxResponse(false, result.Message));
@@ -280,6 +304,54 @@ namespace _3DIT.Controllers
 				AjaxResponse response = new AjaxResponse(true);
 				response.Objects.Add(coverX64);
 				return Json(response);
+			}
+		}
+
+		public JsonResult GetImageFromURL(string url)
+		{
+			try
+			{
+				string path = null;
+
+				WebRequest req = HttpWebRequest.Create(url);
+				req.Method = "HEAD";
+				using (WebResponse resp = req.GetResponse())
+				{
+					var result = FileValidator.Validate(new ValidationSettings()
+					{
+						AllowedType = FileType.Image,
+						ByExtension = false,
+						ContentType = resp.ContentType,
+						FileSize = resp.ContentLength
+					});
+
+					if (!result.IsValid)
+					{
+						return Json(new AjaxResponse(false, result.Message));
+					}
+				}
+
+				using (var client = new WebClient())
+				{
+					path = Path.Combine(Path.GetTempPath(), string.Concat(GetUniqueKey(50), ".png"));
+					client.DownloadFile(url, path);
+				}
+
+				Picture picture = new Picture(path);
+				TagLib.File songFile = GetSongFile();
+				songFile.Tag.Pictures = new IPicture[1] { picture };
+				songFile.Save();
+
+				byte[] coverBytes = ResizeImage((byte[])songFile.Tag.Pictures[0].Data.Data, 500, 500);
+				string coverX64 = Convert.ToBase64String(coverBytes);
+
+				AjaxResponse response = new AjaxResponse(true);
+				response.Objects.Add(coverX64);
+				return Json(response);
+			}
+			catch
+			{
+				return Json(new AjaxResponse(false, "Erro inesperado"));
 			}
 		}
 
@@ -321,6 +393,13 @@ namespace _3DIT.Controllers
 				}
 			}
 			return Json(model);
+		}
+
+		public void Clear()
+		{
+			string fileName = Session["FileName"] as string;
+			System.IO.File.Delete(fileName);
+			Session.Remove("FileName");
 		}
 	}
 }

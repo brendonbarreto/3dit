@@ -1,0 +1,38 @@
+﻿<md-card flex="100" style="min-width:300px">
+	<md-progress-linear md-mode="indeterminate" ng-show="q"></md-progress-linear>
+	<div layout layout-align="center center">
+		<div layout layout-align="center center" layout-sm="column" flex="90">
+			<md-switch flex class="md-primary" md-no-ink aria-label="Switch No Ink" ng-model="fromUrl">
+				Selecionar a partir da URL
+			</md-switch>
+		</div>
+	</div>
+
+	<div ng-show="fromUrl" layout layout-align="center center">
+		<div layout layout-align="center center" layout-sm="column" flex="80">
+			<md-input-container flex>
+				<label>Url do arquivo</label>
+				<input ng-model="imageUrl" type="text">
+			</md-input-container>
+		</div>
+	</div>
+
+	<div ng-show="!fromUrl" layout layout-align="center center">
+		<div layout layout-align="center center" layout-sm="column" flex="80">
+			<input class="ng-hide" id="inputArtFile" type="file" upload-file-input on-file-changed="onFileChanged" accept=".png, .jpg, .jpeg" />
+			<label flex="30" for="inputArtFile" class="md-button md-icon-button">
+				<md-icon>file_upload</md-icon>
+			</label>
+			<label flex="70" style="word-break: break-all;">{{file ? fileName : "Nenhum arquivo selecionado"}}</label>
+		</div>
+	</div>
+
+	<div layout layout-align="end end">
+		<div layout layout-align="end end" layout-sm="column" flex="30">
+			<md-button ng-click="next()" class="md-raised md-primary" ng-disabled="(fromUrl && !imageUrl) || (!fromUrl && !file)">
+				Selecionar
+			</md-button>
+		</div>
+	</div>
+</md-card>
+

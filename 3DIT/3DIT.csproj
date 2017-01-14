@@ -165,6 +165,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\icons\ic_broken_image_white_36dp_1x.png" />
+    <Content Include="Content\icons\ic_broken_image_white_48px.svg" />
+    <Content Include="Content\icons\image-broken-variant.png" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -195,6 +198,7 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\SearchSongPopup.cshtml" />
+    <Content Include="Views\Home\CoverSelectionPanel.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

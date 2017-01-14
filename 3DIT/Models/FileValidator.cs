@@ -24,7 +24,7 @@ namespace _3DIT.Models
 					new FileValidatorType()
 					{
 						For = FileType.Image,
-						ContentTypes = new []{"image/png", "image/jpg" },
+						ContentTypes = new []{"image/png", "image/jpg", "image/jpeg" },
 						Extensions = new []{"png", "jpg"},
 						MaxSize = 5242880
 					}
@@ -32,36 +32,30 @@ namespace _3DIT.Models
 			}
 		}
 
-
-
-		public static FileValidationResult ValidateByName(string fileName, long size)
+		public static FileValidationResult Validate(ValidationSettings settings)
 		{
-			string ext = Path.GetExtension(fileName).Replace(".", "");
-			FileValidatorType validator = Types.SingleOrDefault(m => m.Extensions.Contains(ext));
-			return Validate(validator, size);
-		}
-
-		public static FileValidationResult ValidateByContentType(string contentType, long size)
-		{
-			FileValidatorType validator = Types.SingleOrDefault(m => m.ContentTypes.Contains(contentType));
-			return Validate(validator, size);
-		}
-
-		private static FileValidationResult Validate(FileValidatorType validator, long size)
-		{
-			if (validator != null)
+			FileValidatorType validator = Types.SingleOrDefault(m => m.For == settings.AllowedType);
+			if (settings.FileSize > validator.MaxSize)
 			{
-				if (size > validator.MaxSize)
-				{
-					return new FileValidationResult(false, "Tamanho excede o limite(" + validator.MaxSize / 1048576 + "MB)");
-				}
+				return new FileValidationResult(false, "Tamanho excede o limite(" + validator.MaxSize / 1048576 + "MB)");
+			}
 
-				return new FileValidationResult(true);
+			if (settings.ByExtension)
+			{
+				if (!validator.Extensions.Contains(Path.GetExtension(settings.FileName).Replace(".", "")))
+				{
+					return new FileValidationResult(false, "Tipo de arquivo inválido");
+				}
 			}
 			else
 			{
-				return new FileValidationResult(false, "Formato de arquivo inválido");
+				if (!validator.ContentTypes.Contains(settings.ContentType))
+				{
+					return new FileValidationResult(false, "Tipo de arquivo inválido");
+				}
 			}
+
+			return new FileValidationResult(true);
 		}
 	}
 
@@ -75,6 +69,19 @@ namespace _3DIT.Models
 
 		public FileType For { get; set; }
 
+	}
+
+	public class ValidationSettings
+	{
+		public long FileSize { get; set; }
+
+		public FileType AllowedType { get; set; }
+
+		public bool ByExtension { get; set; }
+
+		public string FileName { get; set; }
+
+		public string ContentType { get; set; }
 	}
 
 	public class FileValidationResult

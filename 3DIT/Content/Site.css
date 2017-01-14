@@ -1,9 +1,21 @@
-﻿
-
-.centered {
+﻿.centered {
 	position: fixed;
 	top: 50%;
 	left: 50%;
 	margin-top: -50px;
 	margin-left: -100px;
+}
+
+.small-cover {
+	width: 80px;
+	height: 80px;
+	border-radius: 8%;
+	background: #757575;
+	-webkit-box-flex: 0;
+	-webkit-flex: none;
+	flex: none;
+	margin-top: 8px;
+	margin-bottom: 8px;
+	margin-right: 16px;
+	box-sizing: content-box;
 }

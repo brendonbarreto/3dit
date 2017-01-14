@@ -1,4 +1,5 @@
 ﻿<md-dialog aria-label="Song Search">
+	<md-progress-linear md-mode="indeterminate" ng-show="q"></md-progress-linear>
 	<md-toolbar>
 		<div class="md-toolbar-tools">
 			<h2>Procure sua música</h2>
@@ -6,7 +7,7 @@
 	</md-toolbar>
 
 	<md-dialog-content>
-		<md-progress-linear md-mode="indeterminate" ng-show="q"></md-progress-linear>
+		
 		<div layout layout-align="center center">
 			<div layout layout-align="center center" layout-sm="column" flex="100">
 				<md-input-container flex="50">
@@ -27,7 +28,7 @@
 
 		<md-list ng-if="list.length" flex>
 			<md-list-item class="md-3-line" ng-repeat="item in list" ng-click="select(item)">
-				<img src="{{item.AlbumCoverUrl}}" class="md-avatar" />
+				<img ng-src="{{item.AlbumCoverUrl}}" img-fallback="/Content/icons/ic_broken_image_white_48px.svg" class="small-cover" />
 				<div class="md-list-item-text" layout="column">
 					<h3>{{ item.SongTitle }}</h3>
 					<h4>{{ item.ArtistName }}</h4>
